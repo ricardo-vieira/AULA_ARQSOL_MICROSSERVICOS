@@ -1,0 +1,25 @@
+# Compilação e binários do Maven
+target/
+*.jar
+*.war
+*.ear
+*.class
+
+# Logs
+*.log
+
+# IDEs e configurações locais
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Banco de dados H2 (caso gere arquivo em disco)
+*.mv.db
+*.trace.db

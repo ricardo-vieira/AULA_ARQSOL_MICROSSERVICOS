@@ -19,13 +19,6 @@ A solução adota os padrões canônicos da arquitetura de microsserviços:
 └──────────────────────────┼───────────────────────────┼─────────────────┘
                            │   HTTP / JSON (REST)      │
                            ▼                           ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│                       CAMADA DE ENTRADA (GATEWAY)                      │
-│                                                                        │
-│                    API GATEWAY — localhost:8080                        │
-│            • Roteamento centralizado • CORS unificado                  │
-│            • Tratamento de falhas    • Health dashboard                │
-└──────────────────────────┬───────────────────────────┬─────────────────┘
                            │                           │
           /api/veiculos/** │          /api/leiloes/**  │
                            ▼                           ▼

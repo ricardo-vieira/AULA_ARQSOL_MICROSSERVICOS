@@ -21,12 +21,12 @@ echo ========================================================
 echo   Microsservicos iniciados com sucesso!
 echo.
 echo   MFE Cadastro (Porta 3001) conecta direto em:
-echo     -> http://localhost:8081/api/veiculos
-echo     -> Swagger: http://localhost:8081/swagger-ui.html
+echo     ==^> http://localhost:8081/api/veiculos
+echo     ==^> Swagger: http://localhost:8081/swagger-ui.html
 echo.
 echo   MFE Leilao (Porta 3002) conecta direto em:
-echo     -> http://localhost:8082/api/leiloes
-echo     -> Swagger: http://localhost:8082/swagger-ui.html
+echo     ==^> http://localhost:8082/api/leiloes
+echo     ==^> Swagger: http://localhost:8082/swagger-ui.html
 echo ========================================================
 echo.
 pause

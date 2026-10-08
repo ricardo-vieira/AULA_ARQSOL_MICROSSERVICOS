@@ -17,10 +17,9 @@ A solução adota os padrões canônicos da arquitetura de microsserviços:
 │             │   mfe-cadastro (:3001)   │    mfe-leilao (:3002)    │    │
 │             └────────────┬─────────────┴─────────────┬────────────┘    │
 └──────────────────────────┼───────────────────────────┼─────────────────┘
-                           │   HTTP / JSON (REST)      │
-                           ▼                           ▼
                            │                           │
-          /api/veiculos/** │          /api/leiloes/**  │
+          HTTP /api/veiculos                           │ HTTP /api/leiloes
+          (Porta :8081)    │                           │ (Porta :8082)
                            ▼                           ▼
 ┌──────────────────────────────────────┐  ┌──────────────────────────────┐
 │           veiculos-service           │  │        leilao-service        │
@@ -45,10 +44,9 @@ A solução adota os padrões canônicos da arquitetura de microsserviços:
 | Padrão | Onde é aplicado | Conceito Didático |
 |---|---|---|
 | **Database per Service** | `veiculos-service` e `leilao-service` | Cada microsserviço gerencia seu próprio banco de dados H2. Nenhuma tabela é compartilhada, garantindo total desacoplamento e autonomia de deploy. |
-| **API Gateway** | `api-gateway` (:8080) | Ponto único de entrada para o frontend. Isola os clientes das portas internas dos microsserviços, unifica CORS e monitora o status dos serviços. |
+| **Comunicação REST Direta MFE ↔ API** | Microfrontends ↔ Microsserviços | Cada microfrontend consome diretamente a API REST do seu respectivo serviço de domínio. |
 | **Domain-Driven Design (Bounded Contexts)** | Separação entre Catálogo e Pregão | O contexto de cadastro e especificação de veículos é delimitado e independente do contexto de lances e regras de leilão. |
 | **Resiliência e Fallback Gracioso** | Frontend MFE ↔ Backend | Se os microsserviços estiverem desligados, o frontend opera em modo de demonstração com dados mock sem quebrar a tela. Quando a API sobe, conecta-se automaticamente. |
-| **Contratos REST & OpenAPI (Swagger)** | Todos os serviços | Documentação interativa em `/swagger-ui.html` para inspeção e testes de integração ao vivo pelos alunos. |
 | **Health Checks (Actuator)** | `/actuator/health` | Padrão de observabilidade para monitoramento de disponibilidade e integridade em tempo de execução. |
 
 ---
@@ -78,18 +76,11 @@ A solução adota os padrões canônicos da arquitetura de microsserviços:
   - `POST /api/leiloes` — Cria um novo lote de leilão
   - `PATCH /api/leiloes/{id}/encerrar` — Encerra o lote manualmente
 
-### 3. `api-gateway` — Porta `8080`
-- **Swagger UI:** [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
-- **Health Check Dashboard:** [http://localhost:8080/api/gateway/status](http://localhost:8080/api/gateway/status)
-- **Roteamento Unificado:**
-  - `/api/veiculos/**` ➔ Encaminha para `http://localhost:8081`
-  - `/api/leiloes/**` ➔ Encaminha para `http://localhost:8082`
-
 ---
 
 ## 🚀 Como Executar
 
-### Opção 1: Iniciar todos os microsserviços de uma vez (Recomendado)
+### Opção 1: Iniciar os microsserviços de uma vez (Recomendado)
 
 Basta dar duplo clique ou executar no terminal:
 ```cmd
@@ -99,7 +90,7 @@ ou via PowerShell:
 ```powershell
 .\start-all.ps1
 ```
-Três janelas de terminal serão abertas, iniciando os serviços nas portas `8081`, `8082` e `8080`.
+Duas janelas de terminal serão abertas, iniciando os serviços nas portas `8081` (veiculos-service) e `8082` (leilao-service).
 
 ---
 
@@ -111,9 +102,6 @@ Três janelas de terminal serão abertas, iniciando os serviços nas portas `808
 
 # Terminal 2: Leilão
 .\mvnw.bat spring-boot:run -pl leilao-service
-
-# Terminal 3: API Gateway
-.\mvnw.bat spring-boot:run -pl api-gateway
 ```
 
 ---

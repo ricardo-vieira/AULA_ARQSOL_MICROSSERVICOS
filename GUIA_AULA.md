@@ -50,14 +50,14 @@ Ao final da aula, os alunos serão capazes de:
 
 ---
 
-### Bloco 3: O Papel do API Gateway (20 min)
-1. **Ponto Único de Entrada:**
-   - Mostre o arquivo `GatewayProxyController.java`.
-   - Explique que o frontend não precisa saber em qual porta ou máquina cada microsserviço está rodando; o frontend só conhece a porta `8080`.
-   - Teste no navegador: `http://localhost:8080/api/veiculos` e `http://localhost:8080/api/leiloes`.
-2. **Dashboard de Saúde:**
-   - Acesse `http://localhost:8080/api/gateway/status`.
-   - Mostre o JSON com a checagem de saúde (`UP`/`DOWN`) dos microsserviços conectados.
+### Bloco 3: Integração Direta MFE ↔ Microsserviços REST (20 min)
+1. **Comunicação Direta por Domínio:**
+   - Mostre como cada Microfrontend consome diretamente a API REST do seu domínio:
+     - `mfe-cadastro` (:3001) consome `http://localhost:8081/api/veiculos`
+     - `mfe-leilao` (:3002) consome `http://localhost:8082/api/leiloes`
+   - Discuta as vantagens da autonomia entre equipes de frontend e backend em cada domínio.
+2. **CORS Descentralizado:**
+   - Mostre os arquivos `CorsConfig.java` configurados em cada microsserviço permitindo as origens dos MFEs.
 
 ---
 
@@ -77,8 +77,7 @@ Ao final da aula, os alunos serão capazes de:
 ### Bloco 5: Teste de Resiliência ao Vivo (O "Momento Uau" da Aula) (20 min)
 1. **Simulando Queda de Serviço:**
    - Feche a janela do terminal do `veiculos-service` (porta 8081).
-2. **Comportamento do Gateway:**
-   - Mostre que o Gateway agora retorna `503 Service Unavailable` com mensagem explicativa ao tentar acessar veículos.
+2. **Isolamento de Falha:**
    - Mostre que o `leilao-service` CONTINUA FUNCIONANDO 100%! Essa é a prova viva da vantagem dos microsserviços: a falha em um domínio não derruba o outro.
 3. **Comportamento do Microfrontend:**
    - No frontend, mostre o chip mudando para `Modo Fallback Offline`. A interface não quebra e continua navegável.

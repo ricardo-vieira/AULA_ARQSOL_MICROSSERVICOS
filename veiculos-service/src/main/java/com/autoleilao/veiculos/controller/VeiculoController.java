@@ -30,8 +30,8 @@ public class VeiculoController {
     @GetMapping
     @Operation(summary = "Listar veículos", description = "Retorna todos os veículos cadastrados, com opção de filtro por tipo ou marca")
     public ResponseEntity<List<Veiculo>> listar(
-            @RequestParam(required = false) String tipo,
-            @RequestParam(required = false) String marca) {
+            @RequestParam(name = "tipo", required = false) String tipo,
+            @RequestParam(name = "marca", required = false) String marca) {
         return ResponseEntity.ok(service.listarTodos(tipo, marca));
     }
 
@@ -41,7 +41,7 @@ public class VeiculoController {
         @ApiResponse(responseCode = "200", description = "Veículo encontrado"),
         @ApiResponse(responseCode = "404", description = "Veículo não encontrado")
     })
-    public ResponseEntity<Veiculo> buscarPorId(@PathVariable Long id) {
+    public ResponseEntity<Veiculo> buscarPorId(@PathVariable("id") Long id) {
         return ResponseEntity.ok(service.buscarPorId(id));
     }
 
@@ -63,7 +63,7 @@ public class VeiculoController {
         @ApiResponse(responseCode = "400", description = "Dados inválidos"),
         @ApiResponse(responseCode = "404", description = "Veículo não encontrado")
     })
-    public ResponseEntity<Veiculo> atualizar(@PathVariable Long id, @Valid @RequestBody VeiculoDTO dto) {
+    public ResponseEntity<Veiculo> atualizar(@PathVariable("id") Long id, @Valid @RequestBody VeiculoDTO dto) {
         return ResponseEntity.ok(service.atualizar(id, dto));
     }
 
@@ -73,7 +73,7 @@ public class VeiculoController {
         @ApiResponse(responseCode = "204", description = "Veículo excluído com sucesso"),
         @ApiResponse(responseCode = "404", description = "Veículo não encontrado")
     })
-    public ResponseEntity<Void> excluir(@PathVariable Long id) {
+    public ResponseEntity<Void> excluir(@PathVariable("id") Long id) {
         service.excluir(id);
         return ResponseEntity.noContent().build();
     }

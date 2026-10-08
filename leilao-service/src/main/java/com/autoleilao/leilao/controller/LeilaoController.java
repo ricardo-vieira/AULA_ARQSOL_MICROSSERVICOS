@@ -29,7 +29,7 @@ public class LeilaoController {
 
     @GetMapping
     @Operation(summary = "Listar lotes de leilão", description = "Retorna todos os lotes de veículos disponíveis para lance")
-    public ResponseEntity<List<LoteLeilao>> listar(@RequestParam(required = false) String status) {
+    public ResponseEntity<List<LoteLeilao>> listar(@RequestParam(name = "status", required = false) String status) {
         return ResponseEntity.ok(service.listarLotes(status));
     }
 
@@ -39,7 +39,7 @@ public class LeilaoController {
         @ApiResponse(responseCode = "200", description = "Lote encontrado"),
         @ApiResponse(responseCode = "404", description = "Lote não encontrado")
     })
-    public ResponseEntity<LoteLeilao> buscarPorId(@PathVariable Long id) {
+    public ResponseEntity<LoteLeilao> buscarPorId(@PathVariable("id") Long id) {
         return ResponseEntity.ok(service.buscarPorId(id));
     }
 
@@ -50,7 +50,7 @@ public class LeilaoController {
         @ApiResponse(responseCode = "400", description = "Lance menor que o mínimo exigido ou leilão encerrado"),
         @ApiResponse(responseCode = "404", description = "Lote não encontrado")
     })
-    public ResponseEntity<LoteLeilao> darLance(@PathVariable Long id, @Valid @RequestBody NovoLanceDTO dto) {
+    public ResponseEntity<LoteLeilao> darLance(@PathVariable("id") Long id, @Valid @RequestBody NovoLanceDTO dto) {
         LoteLeilao atualizado = service.darLance(id, dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(atualizado);
     }
@@ -72,7 +72,7 @@ public class LeilaoController {
         @ApiResponse(responseCode = "200", description = "Lote encerrado com sucesso"),
         @ApiResponse(responseCode = "404", description = "Lote não encontrado")
     })
-    public ResponseEntity<LoteLeilao> encerrar(@PathVariable Long id) {
+    public ResponseEntity<LoteLeilao> encerrar(@PathVariable("id") Long id) {
         return ResponseEntity.ok(service.encerrarLeilao(id));
     }
 }

@@ -23,3 +23,7 @@ Thumbs.db
 # Banco de dados H2 (caso gere arquivo em disco)
 *.mv.db
 *.trace.db
+
+# Guias
+GUIA_AULA.md
+

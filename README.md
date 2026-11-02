@@ -113,9 +113,3 @@ Para executar os testes de unidade e integração dos 3 serviços:
 .\mvnw.bat clean test
 ```
 
----
-
-## 🎓 Roteiro Didático para Lecionar a Aula
-
-Confira o arquivo completo com o roteiro passo a passo e tópicos de discussão em:
-[GUIA_AULA.md](file:///d:/ANTIGRAVITY/AULA_ARQSOL_MICROSSERVICOS/GUIA_AULA.md)

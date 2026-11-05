@@ -23,3 +23,6 @@ Thumbs.db
 # Banco de dados H2 (caso gere arquivo em disco)
 *.mv.db
 *.trace.db
+
+# Guias e manuais locais de infraestrutura
+GUIA_AZURE_CQRS.md

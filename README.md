@@ -1,40 +1,144 @@
-# AutoLeilão — Arquitetura de Microsserviços com Spring Boot & Java 25
+# AutoLeilão DS — Arquitetura de Microsserviços com CQRS, Database per Service, CosmosDB, Azure SQL & Service Bus
 
-Projeto prático de **Microsserviços com Spring Boot** desenvolvido para a disciplina de **Arquitetura de Soluções** (Engenharia de Software). Este backend provê as APIs REST consumidas pela plataforma de Microfrontends [AULA_ARQSOL_MFE](file:///d:/ANTIGRAVITY/AULA_ARQSOL_MFE).
+Evolução arquitetural do projeto de **Microsserviços com Spring Boot** desenvolvido para a disciplina de **Arquitetura de Soluções** (Engenharia de Software). Esta versão (`AULA_ARQSOL_MICROSSERVICOS_DS`) implementa os padrões **CQRS (Command Query Responsibility Segregation)**, **Database per Service**, **Aggregate Root com Optimistic Locking (`@Version`)** e **Mensageria Assíncrona com Azure Service Bus**, mantendo 100% de compatibilidade com a plataforma de Microfrontends [AULA_ARQSOL_MFE](file:///d:/ANTIGRAVITY/AULA_ARQSOL_MFE).
 
 ---
 
-## 🏗️ Visão Geral da Arquitetura
+## 🎯 Contexto e Narrativa Pedagógica: Antes vs. Depois
 
-A solução adota os padrões canônicos da arquitetura de microsserviços:
+Este repositório foi concebido como um **projeto evolutivo e isolado** para garantir o máximo contraste didático entre as fases da evolução arquitetural:
 
 ```
-┌────────────────────────────────────────────────────────────────────────┐
-│                        CAMADA DE APRESENTAÇÃO                          │
-│                                                                        │
-│               SHELL HOST (React + MFE) — localhost:3000                │
-│             ┌──────────────────────────┬──────────────────────────┐    │
-│             │   mfe-cadastro (:3001)   │    mfe-leilao (:3002)    │    │
-│             └────────────┬─────────────┴─────────────┬────────────┘    │
-└──────────────────────────┼───────────────────────────┼─────────────────┘
-                           │                           │
-          HTTP /api/veiculos                           │ HTTP /api/leiloes
-          (Porta :8081)    │                           │ (Porta :8082)
-                           ▼                           ▼
-┌──────────────────────────────────────┐  ┌──────────────────────────────┐
-│           veiculos-service           │  │        leilao-service        │
-│            localhost:8081            │  │        localhost:8082        │
-│                                      │  │                              │
-│ • CRUD de Veículos                   │  │ • Pregão e Lotes Ativos      │
-│ • Validações de Domínio              │  │ • Submissão de Lances        │
-│ • Estatísticas do Catálogo           │  │ • Regra de incremento R$ 500 │
-│ • Documentação Swagger/OpenAPI       │  │ • Regra Anti-Sniping (+60s)  │
-│                                      │  │ • Documentação Swagger       │
-│  ┌────────────────────────────────┐  │  │  ┌────────────────────────┐  │
-│  │  Banco H2: mem:veiculosdb      │  │  │  │  Banco H2: mem:leilaodb│  │
-│  └────────────────────────────────┘  │  │  └────────────────────────┘  │
-│        (Database per Service)        │  │     (Database per Service)   │
-└──────────────────────────────────────┘  └──────────────────────────────┘
+========================================================================================
+FASE ANTERIOR: MODELO TRADICIONAL (CRUD Relacional Acoplado)
+========================================================================================
+
+  [ Frontend / Microfrontends ]
+                 │
+                 │ HTTP (Leituras & Lances simultâneos)
+                 ▼
+  ┌────────────────────────────────────────────────────────┐
+  │     veiculos-service (:8081) / leilao-service (:8082)  │
+  │     (Mesma entidade JPA para Leitura e Escrita)        │
+  └──────────────────────────┬─────────────────────────────┘
+                             │
+                             ▼
+  ┌────────────────────────────────────────────────────────┐
+  │     BANCO RELACIONAL TRADICIONAL / COMPARTILHADO       │
+  │     (Tabelas com JOINs pesados e Locks de linha)       │
+  └────────────────────────────────────────────────────────┘
+
+  ❌ Problemas da Fase Anterior:
+     1. Contenção de Banco: Disputa feroz de lances a cada milissegundo trava tabelas
+        e congela telas de consulta e dashboards de usuários.
+     2. Mapeamento Rígido: Múltiplos JOINs lentos para montar um lote com seu histórico.
+     3. Acoplamento Síncrono: Criar leilão ou integrar catálogo exige chamadas REST
+        bloqueantes entre microsserviços.
+     4. Risco de Deadlock: Locks pessimistas no pregão geram erros e quedas de vazão.
+
+========================================================================================
+FASE ATUAL (DS): CQRS, DATABASE PER SERVICE & EVENT-DRIVEN NA NUVEM AZURE
+========================================================================================
+
+  [ Shell Host :3000   ] ──┐
+  [ MFE Cadastro :3001 ] ──┼──> [ API GATEWAY & BFF :8080 ] (Ponto Único & Borda Azure)
+  [ MFE Leilão :3002   ] ──┘    │
+                                ├─ CORS Centralizado & Rastreabilidade (X-Correlation-Id)
+                                ├─ Agregação Concorrente (BFF Reativo WebFlux)
+                                │
+                                ├───> /api/veiculos/**  ──> [ veiculos-service :8081 ]
+                                ├───> /api/leiloes/**   ──> [ leilao-service :8082 ]
+                                └───> /api/bff/**       ──> [ Composição Reativa WebClient ]
+                                                              │
+                                                              │ (Domínio & Dados)
+                                                              ▼
+  ┌─────────────────────────────────────────┐    ┌─────────────────────────────────────────┐
+  │         veiculos-service (:8081)        │    │          leilao-service (:8082)         │
+  │                                         │    │                                         │
+  │     COMMAND: Azure Cosmos DB (Mongo)    │    │     COMMAND: Azure Cosmos DB (Mongo)    │
+  │     Banco: veiculos_command_db          │    │     Banco: leilao_command_db            │
+  │                                         │    │     Aggregate Root + @Version Lock      │
+  │     MENSAGERIA: Azure Service Bus       │    │     MENSAGERIA: Azure Service Bus       │
+  │     Fila: veiculos-cqrs-queue           │    │     Fila: leilao-cqrs-queue             │
+  │     Fila: veiculos-leilao-queue ────────┼────┼─►   Consumer: Cria Lote Automático!     │
+  └────────────────────┬────────────────────┘    └────────────────────┬────────────────────┘
+                       │ Atualiza Projeção (Sync)                     │ Atualiza Projeção (Sync)
+                       ▼                                              ▼
+  ┌────────────────────────────────────────────────────────────────────────────────────────┐
+  │                    CAMADA DE LEITURA UNIFICADA (CQRS VIEW DATABASE)                    │
+  │                      AZURE SQL SERVER (Banco: autoleilao-read-db)                      │
+  │                                                                                        │
+  │   Tabela: [veiculos_query]             Tabelas: [lotes_leilao_query] + [lances_query]  │
+  │   (Filtros rápidos e estatísticas)     (Histórico e listagens sem lock de escrita)     │
+  └────────────────────────────────────────────────────────────────────────────────────────┘
+
+  ✅ Benefícios da Fase Atual (DS):
+     1. Ponto Único com Gateway & BFF: Frontend consome exclusivamente a porta :8080.
+     2. Desacoplamento Total (Database per Service): Cada serviço tem seu próprio banco NoSQL
+        de gravação (System of Record) sem compartilhar schemas ou tabelas.
+     3. Zero Contenção com @Version: Concorrência de lances resolvida com Optimistic Locking
+        em documentos JSON atômicos (latência de microssegundos).
+     4. Integração Assíncrona (Event-Driven): Ao cadastrar um veículo, o lote de leilão é
+        criado automaticamente via fila do Azure Service Bus, sem bloqueios síncronos.
+     5. Consultas Otimizadas (CQRS Read Model): O Azure SQL Server mantém projeções planas
+        desnormalizadas prontas para telas, filtros e relatórios de alta performance.
+     6. Resiliência e Dual-Engine: Executa 100% nativo na Nuvem Azure ou 100% offline local
+        com emuladores em memória e banco H2 para desenvolvimento e testes.
+========================================================================================
+```
+
+---
+
+## 📊 Tabela Comparativa: Antes (CRUD) vs. Depois (CQRS + Database per Service)
+
+| Característica | Modelo Tradicional (v1) | Modelo CQRS & Database per Service (v2 - DS) |
+| :--- | :--- | :--- |
+| **Ponto de Acesso do Frontend** | Múltiplas portas expostas (`:8081`, `:8082`) | **API Gateway & BFF (:8080)** |
+| **Banco de Dados de Escrita (Command)** | Relacional com locks de tabela/linha | **Azure Cosmos DB NoSQL (Documentos Atômicos)** |
+| **Isolamento de Dados** | Schemas compartilhados / Acoplamento relacional | **Database per Service (`veiculos_command_db` e `leilao_command_db`)** |
+| **Controle de Concorrência nos Lances** | Locks pessimistas (`SELECT FOR UPDATE`) / Risco de Deadlock | **Optimistic Locking nativo com `@Version`** |
+| **Modelo de Leitura (Query)** | Tabelas normalizadas com `JOINs` concorrendo com lances | **Azure SQL Server dedicado (`autoleilao-read-db`) com projeções planas** |
+| **Integração entre Microsserviços** | Chamadas REST HTTP síncronas e bloqueantes | **Mensageria Assíncrona com Azure Service Bus (Filas AMQP)** |
+| **Criação de Lotes de Leilão** | Manual ou acoplada via código síncrono | **Automática via evento `veiculos-leilao-queue`** |
+| **Consistência dos Dados** | ACID estrito local (inviável em escala distribuída) | **Consistência Eventual (*Eventual Consistency*) com Padrão Saga** |
+| **Governança de Arquitetura** | Nenhuma validação automática | **Testes de Arquitetura no Build com ArchUnit + JUnit 5** |
+
+---
+
+## 🏗️ Visão Geral da Arquitetura (CQRS + Database per Service)
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                       CAMADA DE APRESENTAÇÃO (MICROFRONTENDS)                          │
+│         Shell Host (:3000)      mfe-cadastro (:3001)        mfe-leilao (:3002)         │
+└───────────────────────────────────────────┬────────────────────────────────────────────┘
+                                            │ HTTP /api/**
+                                            ▼
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                        API GATEWAY & BFF (:8080) (BORDA AZURE)                         │
+│                    Spring Cloud Gateway (WebFlux) • Netty • CORS                       │
+└───────────────────┬──────────────────▲──────────────────┬──────────────────▲───────────┘
+                    │                  │                  │                  │
+     POST/PUT/DELETE│                  │GET               │POST Lances/Lotes │GET
+        (Commands)  │          (Queries│                  │(Commands)        │(Queries)
+                    ▼                  │                  ▼                  │
+┌──────────────────────────────────────┴───┐  ┌──────────────────────────────┴───────────┐
+│        veiculos-service (:8081)          │  │          leilao-service (:8082)          │
+│                                          │  │                                          │
+│  • Command DB: Azure Cosmos DB (Mongo)   │  │  • Command DB: Azure Cosmos DB (Mongo)   │
+│    Database: veiculos_command_db         │  │    Database: leilao_command_db           │
+│  • Service Bus: veiculos-cqrs-queue      │  │    Aggregate Root + @Version Lock        │
+│  • Service Bus: veiculos-leilao-queue ───┼──┼─►• Consumer: Cria Lote Automático!       │
+│                                          │  │  • Service Bus: leilao-cqrs-queue        │
+└────────────────────┬─────────────────────┘  └────────────────────┬─────────────────────┘
+                     │ Atualiza Projeção SQL                       │ Atualiza Projeção SQL
+                     ▼                                             ▼
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                   CAMADA DE LEITURA UNIFICADA (CQRS VIEW DATABASE)                     │
+│                      AZURE SQL SERVER (Banco: autoleilao-read-db)                      │
+│                                                                                        │
+│     Tabela: [veiculos_query]             Tabelas: [lotes_leilao_query] + [lances_query]│
+└────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -43,11 +147,12 @@ A solução adota os padrões canônicos da arquitetura de microsserviços:
 
 | Padrão | Onde é aplicado | Conceito Didático |
 |---|---|---|
-| **Database per Service** | `veiculos-service` e `leilao-service` | Cada microsserviço gerencia seu próprio banco de dados H2. Nenhuma tabela é compartilhada, garantindo total desacoplamento e autonomia de deploy. |
-| **Comunicação REST Direta MFE ↔ API** | Microfrontends ↔ Microsserviços | Cada microfrontend consome diretamente a API REST do seu respectivo serviço de domínio. |
-| **Domain-Driven Design (Bounded Contexts)** | Separação entre Catálogo e Pregão | O contexto de cadastro e especificação de veículos é delimitado e independente do contexto de lances e regras de leilão. |
-| **Resiliência e Fallback Gracioso** | Frontend MFE ↔ Backend | Se os microsserviços estiverem desligados, o frontend opera em modo de demonstração com dados mock sem quebrar a tela. Quando a API sobe, conecta-se automaticamente. |
-| **Health Checks (Actuator)** | `/actuator/health` | Padrão de observabilidade para monitoramento de disponibilidade e integridade em tempo de execução. |
+| **CQRS (Command Query Responsibility Segregation)** | Pacotes `command/` e `query/` em ambos os serviços | Separa o modelo de escrita (CosmosDB NoSQL) do modelo de leitura (Azure SQL Server), eliminando contenção entre quem dá lances e quem consulta a tela. |
+| **Database per Service (No Command)** | `veiculos_command_db` e `leilao_command_db` no CosmosDB | Cada microsserviço possui seu próprio banco de gravação (*System of Record*) isolado. |
+| **Aggregate Root + Optimistic Locking (`@Version`)** | `LoteLeilaoDocument` + `LanceEmbedded` | Lote e lances gravados em um único documento JSON atômico sem `JOIN`/`FK`, com controle de concorrência `@Version` contra lances simultâneos. |
+| **CQRS View Database** | `autoleilao-read-db` no Azure SQL Server | Projeção relacional otimizada para leitura, filtros compostos e agregações (`SUM`, `GROUP BY`). |
+| **Event-Driven Architecture (Azure Service Bus)** | `veiculos-cqrs-queue`, `leilao-cqrs-queue` e `veiculos-leilao-queue` | Sincronização assíncrona Write -> Read e criação automática de lote no leilão ao cadastrar um veículo! |
+
 
 ---
 
@@ -113,3 +218,9 @@ Para executar os testes de unidade e integração dos 3 serviços:
 .\mvnw.bat clean test
 ```
 
+---
+
+## 🎓 Roteiro Didático para Lecionar a Aula
+
+Confira o arquivo completo com o roteiro passo a passo e tópicos de discussão em:
+[GUIA_AULA.md](file:///d:/ANTIGRAVITY/AULA_ARQSOL_MICROSSERVICOS/GUIA_AULA.md)

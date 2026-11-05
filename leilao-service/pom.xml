@@ -6,15 +6,15 @@
 
     <parent>
         <groupId>com.autoleilao</groupId>
-        <artifactId>autoleilao-microsservicos</artifactId>
-        <version>1.0.0</version>
+        <artifactId>autoleilao-microsservicos-ds</artifactId>
+        <version>2.0.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>leilao-service</artifactId>
-    <version>1.0.0</version>
-    <name>Leilao Service</name>
-    <description>Microsserviço de Pregão de Leilão e Gestão de Lances</description>
+    <version>2.0.0</version>
+    <name>Leilao Service (CQRS + Database per Service)</name>
+    <description>Microsserviço de Pregão e Lances com CQRS (CosmosDB Command + Azure SQL Query + Azure Service Bus)</description>
 
     <dependencies>
         <dependency>
@@ -25,14 +25,30 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
+        <!-- Command Side: Azure Cosmos DB for MongoDB (Aggregate Root + @Version Optimistic Locking) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-mongodb</artifactId>
+        </dependency>
+        <!-- Query Side: Azure SQL Server (JPA) + H2 Fallback -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.microsoft.sqlserver</groupId>
+            <artifactId>mssql-jdbc</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <scope>runtime</scope>
+        </dependency>
+        <!-- Mensageria Assíncrona: Azure Service Bus -->
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-messaging-servicebus</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springdoc</groupId>

@@ -13,10 +13,13 @@ public class OpenApiConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("AutoLeilão — Microsserviço de Leilão e Lances")
-                        .version("1.0.0")
-                        .description("API REST do Microsserviço de Pregão e Lances para a disciplina de Arquitetura de Soluções. " +
-                                "Demonstra regras de negócio de lances em tempo real, isolamento de banco de dados e integração assíncrona/desacoplada.")
+                        .title("AutoLeilão — Microsserviço de Leilão e Lances (CQRS + Database per Service)")
+                        .version("2.0.0")
+                        .description("Arquitetura CQRS + Database per Service + Aggregate Root:\n" +
+                                "• COMMAND (Escrita de Baixa Latência): Azure Cosmos DB for MongoDB (Database exclusivo: leilao_command_db, Aggregate Root com @Version Optimistic Locking)\n" +
+                                "• MENSAGERIA (Sincronização e Integração): Azure Service Bus (leilao-cqrs-queue e veiculos-leilao-queue)\n" +
+                                "• QUERY (Leitura Relacional): Azure SQL Server (Tabelas: lotes_leilao_query e lances_query)")
                         .contact(new Contact().name("Disciplina de Arquitetura de Soluções")));
     }
 }
+

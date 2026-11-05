@@ -13,10 +13,13 @@ public class OpenApiConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("AutoLeilão — Microsserviço de Veículos")
-                        .version("1.0.0")
-                        .description("API REST do Microsserviço de Veículos para a disciplina de Arquitetura de Soluções. " +
-                                "Demonstra operações de CRUD, isolamento de banco de dados (Database-per-Service) e validações de domínio.")
+                        .title("AutoLeilão — Microsserviço de Veículos (CQRS + Database per Service)")
+                        .version("2.0.0")
+                        .description("Arquitetura CQRS + Database per Service:\n" +
+                                "• COMMAND (Escrita): Azure Cosmos DB for MongoDB (Database exclusivo: veiculos_command_db)\n" +
+                                "• MENSAGERIA (Sincronização e Integração): Azure Service Bus (veiculos-cqrs-queue e veiculos-leilao-queue)\n" +
+                                "• QUERY (Leitura): Azure SQL Server (Tabela otimizada: veiculos_query)")
                         .contact(new Contact().name("Disciplina de Arquitetura de Soluções")));
     }
 }
+

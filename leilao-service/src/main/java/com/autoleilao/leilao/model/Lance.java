@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 @Entity
-@Table(name = "lances")
+@Table(name = "lances_query")
 public class Lance {
 
     @Id

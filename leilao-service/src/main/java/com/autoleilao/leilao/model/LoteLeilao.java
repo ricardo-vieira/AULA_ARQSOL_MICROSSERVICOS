@@ -7,11 +7,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "lotes_leilao")
+@Table(name = "lotes_leilao_query")
 public class LoteLeilao {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     // Referência lógica ao ID do veículo no microsserviço de veículos

@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/veiculos")
 @Tag(name = "1. Veículos — COMMAND (Escrita / Azure Cosmos DB)",
      description = "Operações de mutação de estado (CQRS Command). Grava no Azure Cosmos DB (veiculos_command_db) e publica eventos no Azure Service Bus.")
-@CrossOrigin(origins = "*")
 public class VeiculoCommandController {
 
     private final VeiculoCommandService commandService;

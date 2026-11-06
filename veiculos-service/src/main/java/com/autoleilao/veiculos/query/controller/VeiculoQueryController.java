@@ -20,7 +20,6 @@ import java.util.Map;
 @RequestMapping("/api/veiculos")
 @Tag(name = "2. Veículos — QUERY (Leitura / Azure SQL Server)",
      description = "Consultas otimizadas e agregações relacionais (CQRS Query). Lê exclusivamente do Azure SQL Server (tabela veiculos_query).")
-@CrossOrigin(origins = "*")
 public class VeiculoQueryController {
 
     private final VeiculoQueryService queryService;

@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/leiloes")
 @Tag(name = "1. Leilão e Lances — COMMAND (Escrita / Azure Cosmos DB)",
      description = "Operações de alta velocidade de escrita (CQRS Command). Grava o Aggregate Root (Lote + Lances) no Azure Cosmos DB (leilao_command_db) com @Version Optimistic Locking e publica eventos no Azure Service Bus.")
-@CrossOrigin(origins = "*")
 public class LeilaoCommandController {
 
     private final LeilaoCommandService commandService;

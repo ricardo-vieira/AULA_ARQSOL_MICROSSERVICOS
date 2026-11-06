@@ -19,7 +19,6 @@ import java.util.Map;
 @RequestMapping("/api/leiloes")
 @Tag(name = "2. Leilão e Lances — QUERY (Leitura / Azure SQL Server)",
      description = "Consultas estruturadas para os Microfrontends (CQRS Query). Lê exclusivamente do Azure SQL Server (tabelas lotes_leilao_query e lances_query), isolando a carga de leitura da disputa de lances.")
-@CrossOrigin(origins = "*")
 public class LeilaoQueryController {
 
     private final LeilaoQueryService queryService;

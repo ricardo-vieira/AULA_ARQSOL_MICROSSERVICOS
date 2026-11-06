@@ -54,16 +54,16 @@ public class LoteLeilaoCommandRepository {
         } else {
             loteIdSequence.accumulateAndGet(doc.getId(), Math::max);
         }
+        if (isCloudCosmosActive()) {
+            log.info("[CQRS-COMMAND -> CosmosDB ({})] Gravando Aggregate LoteLeilaoDocument ID={} LanceAtual={} TotalLances={} (v{})",
+                    databaseName, doc.getId(), doc.getLanceAtual(), doc.getTotalLances(), doc.getVersion() != null ? doc.getVersion() : 1L);
+            return mongoTemplate.save(doc);
+        }
+
         if (doc.getVersion() == null) {
             doc.setVersion(1L);
         } else {
             doc.setVersion(doc.getVersion() + 1);
-        }
-
-        if (isCloudCosmosActive()) {
-            log.info("[CQRS-COMMAND -> CosmosDB ({})] Gravando Aggregate LoteLeilaoDocument ID={} LanceAtual={} TotalLances={} (v{})",
-                    databaseName, doc.getId(), doc.getLanceAtual(), doc.getTotalLances(), doc.getVersion());
-            return mongoTemplate.save(doc);
         }
 
         log.info("[CQRS-COMMAND -> LocalDocumentStore ({})] Gravando Aggregate LoteLeilaoDocument ID={} LanceAtual={} TotalLances={} (v{})",

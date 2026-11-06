@@ -53,16 +53,16 @@ public class VeiculoCommandRepository {
         } else {
             idSequence.accumulateAndGet(doc.getId(), Math::max);
         }
+        if (isCloudCosmosActive()) {
+            log.info("[CQRS-COMMAND -> CosmosDB ({})] Gravando VeiculoDocument ID={} Placa={} (v{})",
+                    databaseName, doc.getId(), doc.getPlaca(), doc.getVersion() != null ? doc.getVersion() : 1L);
+            return mongoTemplate.save(doc);
+        }
+
         if (doc.getVersion() == null) {
             doc.setVersion(1L);
         } else {
             doc.setVersion(doc.getVersion() + 1);
-        }
-
-        if (isCloudCosmosActive()) {
-            log.info("[CQRS-COMMAND -> CosmosDB ({})] Gravando VeiculoDocument ID={} Placa={} (v{})",
-                    databaseName, doc.getId(), doc.getPlaca(), doc.getVersion());
-            return mongoTemplate.save(doc);
         }
 
         log.info("[CQRS-COMMAND -> LocalDocumentStore ({})] Gravando VeiculoDocument ID={} Placa={} (v{})",

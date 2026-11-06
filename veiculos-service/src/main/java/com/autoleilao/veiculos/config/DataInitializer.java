@@ -1,8 +1,12 @@
 package com.autoleilao.veiculos.config;
 
+import com.autoleilao.veiculos.command.model.VeiculoDocument;
 import com.autoleilao.veiculos.command.repository.VeiculoCommandRepository;
 import com.autoleilao.veiculos.command.service.VeiculoCommandService;
 import com.autoleilao.veiculos.dto.VeiculoDTO;
+import com.autoleilao.veiculos.messaging.consumer.VeiculoQueryProjectionConsumer;
+import com.autoleilao.veiculos.messaging.event.VeiculoSyncEvent;
+import com.autoleilao.veiculos.repository.VeiculoRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,7 +18,9 @@ public class DataInitializer {
 
     @Bean
     public CommandLineRunner initDatabase(VeiculoCommandRepository commandRepository,
-                                          VeiculoCommandService commandService) {
+                                          VeiculoCommandService commandService,
+                                          VeiculoRepository queryRepository,
+                                          VeiculoQueryProjectionConsumer projectionConsumer) {
         return args -> {
             if (commandRepository.count() == 0) {
                 commandService.cadastrarSemNotificarLeilao(criarDto(
@@ -37,6 +43,23 @@ public class DataInitializer {
                         new BigDecimal("55000.00"),
                         "Hatch compacto com câmbio automático. Único dono."
                 ));
+            } else if (queryRepository.count() == 0) {
+                for (VeiculoDocument doc : commandRepository.findAll()) {
+                    projectionConsumer.processarEventoSincronizacao(new VeiculoSyncEvent(
+                            "CRIADO",
+                            doc.getId(),
+                            doc.getMarca(),
+                            doc.getModelo(),
+                            doc.getAno(),
+                            doc.getPlaca(),
+                            doc.getCor(),
+                            doc.getTipo(),
+                            doc.getValorMinimo(),
+                            doc.getDescricao(),
+                            doc.getStatus(),
+                            doc.getDataCadastro()
+                    ));
+                }
             }
         };
     }

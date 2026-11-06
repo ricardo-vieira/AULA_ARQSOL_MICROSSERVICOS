@@ -3,8 +3,10 @@ package com.autoleilao.leilao.config;
 import com.autoleilao.leilao.command.model.LanceEmbedded;
 import com.autoleilao.leilao.command.model.LoteLeilaoDocument;
 import com.autoleilao.leilao.command.repository.LoteLeilaoCommandRepository;
+import com.autoleilao.leilao.messaging.consumer.LeilaoQueryProjectionConsumer;
 import com.autoleilao.leilao.messaging.event.LoteLeilaoSyncEvent;
 import com.autoleilao.leilao.messaging.publisher.LeilaoServiceBusGateway;
+import com.autoleilao.leilao.repository.LoteLeilaoRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,7 +19,9 @@ public class DataInitializer {
 
     @Bean
     public CommandLineRunner initDatabase(LoteLeilaoCommandRepository commandRepository,
-                                          LeilaoServiceBusGateway serviceBusGateway) {
+                                          LeilaoServiceBusGateway serviceBusGateway,
+                                          LoteLeilaoRepository queryRepository,
+                                          LeilaoQueryProjectionConsumer projectionConsumer) {
         return args -> {
             if (commandRepository.count() == 0) {
                 LoteLeilaoDocument lote1 = new LoteLeilaoDocument(
@@ -60,28 +64,36 @@ public class DataInitializer {
 
                 for (LoteLeilaoDocument doc : List.of(lote1, lote2, lote3, lote4)) {
                     LoteLeilaoDocument salvo = commandRepository.save(doc);
-                    LoteLeilaoSyncEvent ev = new LoteLeilaoSyncEvent();
-                    ev.setTipoEvento("LOTE_INICIALIZADO");
-                    ev.setId(salvo.getId());
-                    ev.setVeiculoId(salvo.getVeiculoId());
-                    ev.setMarca(salvo.getMarca());
-                    ev.setModelo(salvo.getModelo());
-                    ev.setAno(salvo.getAno());
-                    ev.setPlaca(salvo.getPlaca());
-                    ev.setCor(salvo.getCor());
-                    ev.setTipo(salvo.getTipo());
-                    ev.setValorMinimo(salvo.getValorMinimo());
-                    ev.setDescricao(salvo.getDescricao());
-                    ev.setLanceAtual(salvo.getLanceAtual());
-                    ev.setTotalLances(salvo.getTotalLances());
-                    ev.setTempoRestante(salvo.getTempoRestante());
-                    ev.setStatus(salvo.getStatus());
-                    ev.setDataCriacao(salvo.getDataCriacao());
-                    ev.setBids(salvo.getBids());
-                    serviceBusGateway.publicarEventoLote(ev);
+                    serviceBusGateway.publicarEventoLote(toSyncEvent(salvo));
+                }
+            } else if (queryRepository.count() == 0) {
+                for (LoteLeilaoDocument salvo : commandRepository.findAll()) {
+                    projectionConsumer.processarEventoSincronizacao(toSyncEvent(salvo));
                 }
             }
         };
+    }
+
+    private LoteLeilaoSyncEvent toSyncEvent(LoteLeilaoDocument salvo) {
+        LoteLeilaoSyncEvent ev = new LoteLeilaoSyncEvent();
+        ev.setTipoEvento("LOTE_INICIALIZADO");
+        ev.setId(salvo.getId());
+        ev.setVeiculoId(salvo.getVeiculoId());
+        ev.setMarca(salvo.getMarca());
+        ev.setModelo(salvo.getModelo());
+        ev.setAno(salvo.getAno());
+        ev.setPlaca(salvo.getPlaca());
+        ev.setCor(salvo.getCor());
+        ev.setTipo(salvo.getTipo());
+        ev.setValorMinimo(salvo.getValorMinimo());
+        ev.setDescricao(salvo.getDescricao());
+        ev.setLanceAtual(salvo.getLanceAtual());
+        ev.setTotalLances(salvo.getTotalLances());
+        ev.setTempoRestante(salvo.getTempoRestante());
+        ev.setStatus(salvo.getStatus());
+        ev.setDataCriacao(salvo.getDataCriacao());
+        ev.setBids(salvo.getBids());
+        return ev;
     }
 }
 
